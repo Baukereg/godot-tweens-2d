@@ -1,0 +1,237 @@
+extends Node
+
+
+## IMPORTANT: make sure this path is set to the right location of the shader.
+const COLOR_OVERLAY_SHADER = preload("res://tweens_2D_color_overlay.gdshader")
+
+
+## Helper function used to scale animation variables to respect the target's scale.
+func _get_amplitude(target) -> float:
+	return max(abs(target.scale.x), abs(target.scale.y))
+	
+	
+## Creates an animation that scales the target down to zero.
+func add_disappear(tween:Tween, target, duration:float = 0.4) -> Tween:
+	tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(target, "scale", Vector2.ZERO, duration)
+	return tween
+
+	
+## Creates an animation that scales the target from zero to its default scale.
+func add_appear(tween:Tween, target, default_scale:Vector2 = Vector2.ONE, duration:float = 1.0) -> Tween:
+	tween.tween_callback(func(): target.scale = Vector2.ZERO)
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+	tween.tween_property(target, "scale", default_scale, duration)
+	return tween
+	
+	
+## Creates an animation that creates a pulse like a heartbeat.
+func add_pulse(tween:Tween, target, amount:float = 0.3, duration:float = 0.4) -> Tween:
+	var default_scale:Vector2 = target.scale
+	var up_scale:Vector2 = default_scale * (1.0 + amount)
+	
+	var duration_up:float = duration * 0.5
+	var duration_down:float = duration * 0.5
+
+	tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(target, "scale", up_scale, duration_up)
+	tween.tween_property(target, "scale", default_scale, duration_down)
+	return tween
+	
+	
+## Creates an animation that bobs the target in a given direction (default is Vector2.UP).
+func add_bob(tween:Tween, target, distance:float = 20.0, duration:float = 0.4, direction:Vector2 = Vector2.UP) -> Tween:
+	assert([Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT].has(direction),
+		"direction should be either Vector2.UP, Vector2.DOWN, Vector2.LEFT or Vector2.RIGHT")
+	
+	var default_position:Vector2 = target.position
+	var offset:Vector2 = Vector2.ZERO
+	match direction:
+		Vector2.UP: offset.y = -distance
+		Vector2.DOWN: offset.y = distance
+		Vector2.LEFT: offset.x = -distance
+		Vector2.RIGHT: offset.x = distance
+	offset *= _get_amplitude(target)
+	
+	var duration_up:float = duration * 0.5
+	var duration_down:float = duration * 0.5
+	
+	tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(target, "position", default_position + offset, duration_up)
+	tween.tween_property(target, "position", default_position, duration_down)
+	return tween
+
+
+## Creates an animation that makes the target bounce in a given direction (default is Vector2.UP).
+func add_bounce(tween:Tween, target, distance:float = 20.0, duration:float = 0.8, direction:Vector2 = Vector2.UP) -> Tween:
+	assert([Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT].has(direction),
+		"direction should be either Vector2.UP, Vector2.DOWN, Vector2.LEFT or Vector2.RIGHT")
+	
+	var default_position:Vector2 = target.position
+	var default_scale:Vector2 = target.scale
+	var up_offset:Vector2 = Vector2.ZERO
+	var down_offset:Vector2 = Vector2.ZERO
+	match direction:
+		Vector2.UP:
+			up_offset.y = -distance
+			down_offset.y = distance * 0.9
+		Vector2.DOWN:
+			up_offset.y = distance
+			down_offset.y = -distance * 0.9
+		Vector2.LEFT:
+			up_offset.x = -distance
+			down_offset.x = distance * 0.9
+		Vector2.RIGHT:
+			up_offset.x = distance
+			down_offset.x = -distance * 0.9
+	var amp:float = _get_amplitude(target)
+	up_offset *= amp
+	down_offset *= amp
+
+	var duration_up:float = duration * 0.3
+	var duration_down:float = duration * 0.3
+	var duration_rebound:float = duration * 0.2
+	var duration_settle:float = duration * 0.2
+	
+	# Up.
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(target, "position", default_position + up_offset, duration_up)
+	match direction:
+		Vector2.UP, Vector2.DOWN: tween.parallel().tween_property(target, "scale", default_scale * Vector2(0.9, 1.1), duration_up)
+		Vector2.LEFT, Vector2.RIGHT: tween.parallel().tween_property(target, "scale", default_scale * Vector2(1.1, 0.9), duration_up)
+	# Down.
+	tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(target, "position", default_position + down_offset, duration_down)
+	match direction:
+		Vector2.UP, Vector2.DOWN: tween.parallel().tween_property(target, "scale", default_scale * Vector2(1.2, 0.8), duration_down)
+		Vector2.LEFT, Vector2.RIGHT: tween.parallel().tween_property(target, "scale", default_scale * Vector2(0.8, 1.2), duration_down)
+	# Rebound.
+	tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(target, "position", default_position + up_offset * 0.15, duration_rebound)
+	match direction:
+		Vector2.UP, Vector2.DOWN: tween.parallel().tween_property(target, "scale", default_scale * Vector2(1.0, 1.1), duration_rebound)
+		Vector2.LEFT, Vector2.RIGHT: tween.parallel().tween_property(target, "scale", default_scale * Vector2(1.1, 1.0), duration_rebound)
+	# Settle.
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(target, "position", default_position, duration_settle)
+	tween.parallel().tween_property(target, "scale", default_scale, duration_settle)
+	return tween
+	
+	
+## Creates an animation that makes the target wobble from right to left.
+func add_wobble(tween:Tween, target, angle_degrees:float = 30.0, duration:float = 1.0, snaps:int = 3) -> Tween:
+	var default_rotation:float = target.rotation_degrees
+	var step:float = duration / float(snaps * 2 + 1)
+	
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	var deg:float = angle_degrees
+	for i in range(snaps):
+		var dir:float = 1.0 if (i % 2) == 0 else -1.0
+		tween.tween_property(target, "rotation_degrees", default_rotation + dir * deg, step)
+		deg *= 0.6  # Decay factor.
+	tween.tween_property(target, "rotation_degrees", default_rotation, step)
+	return tween
+
+
+## Creates an animation that squeezes the target like a squeeze ball.
+func add_squeeze(tween:Tween, target, scale_amount:float = 1.0, duration:float = 0.8) -> Tween:
+	var default_scale:Vector2 = target.scale
+	var horizontal_scale:Vector2 = Vector2(1.2, 0.2) * scale_amount * default_scale
+	var vertical_scale:Vector2 = Vector2(.2, 1.4) * scale_amount * default_scale
+	
+	var duration_down:float = duration * 0.2
+	var duration_up:float = duration * 0.2
+	var duration_settle:float = duration * 0.6
+	
+	# Down.
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(target, "scale", horizontal_scale, duration_down)
+	# Up.
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(target, "scale", vertical_scale, duration_up)
+	# Settle.
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+	tween.tween_property(target, "scale", default_scale, duration_settle)
+	return tween
+
+
+## Creates an animation that spins the target around.
+func add_spin(tween:Tween, target, direction:int = 1, duration:float = 0.8, keep_base:bool = false) -> Tween:
+	assert([-1, 1].has(direction), "direction should be either -1 or 1")
+	
+	var default_rotation:float = target.rotation_degrees if keep_base else 0
+	target.rotation_degrees = default_rotation
+	
+	tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(target, "rotation_degrees", default_rotation + 360 * direction, duration)
+	tween.tween_callback(func(): target.rotation_degrees = default_rotation)
+	return tween
+
+
+## Creates an animation that flips the target like a card.
+func add_flip(tween:Tween, target, direction:Vector2 = Vector2.UP, duration:float = 0.6, halfway_callback:Callable = Callable()) -> Tween:
+	assert([Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT].has(direction),
+		"direction should be either Vector2.UP, Vector2.DOWN, Vector2.LEFT or Vector2.RIGHT")
+	
+	var default_scale:Vector2 = target.scale
+	
+	var duration_close:float = duration * 0.5
+	var duration_open:float = duration * 0.5
+	
+	tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(target, "scale", direction.abs() * default_scale, duration_close)
+	tween.tween_callback(halfway_callback)
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(target, "scale", default_scale, duration_open)
+	return tween
+	
+	
+## Creates an animation that shakes the target around.
+func add_shake(tween:Tween, target, range:float = 10.0, duration:float = 1.0, intval:float = .02, decay:float = 1.0) -> Tween:
+	var center:Vector2 = target.position
+	var num_of_moves:int = max(1, int(round(duration / max(0.0001, intval))))
+	range *= _get_amplitude(target)
+	
+	tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	for i in range(num_of_moves):
+		var dir:Vector2 = Vector2.UP.rotated(randf() * TAU)
+		var next:Vector2 = center + dir * range
+		range *= decay
+		tween.tween_property(target, "position", next, intval)
+	tween.tween_property(target, "position", center, intval)
+	return tween
+	
+	
+## Creates an animated color flash over the target.
+## On the target a new shader material will be assigned and afterwards removed.
+func add_flash(tween:Tween, target, flash_color:Color = Color.WHITE, amount:float = 0.8, fade_duration:float = 0.2, hold_duration:float = 0) -> Tween:
+	assert(target.material == null, "target should not have a material assigned yet")
+	
+	tween.tween_callback(func():
+		target.material = ShaderMaterial.new()
+		target.material.shader = COLOR_OVERLAY_SHADER
+		target.material.set_shader_parameter("color", flash_color)
+	)
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_method(func(value: float): target.material.set_shader_parameter("amount", value), 0.0, amount, fade_duration * 0.35)
+	if hold_duration > 0:
+		tween.tween_interval(hold_duration)
+	tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	tween.tween_method(func(value: float): target.material.set_shader_parameter("amount", value), amount, 0.0, fade_duration * 0.65)
+	tween.tween_callback(func(): target.material = null)
+	
+	return tween
+	
+	
+## Creates a loop within a longer sequence of chained tweens.
+## The "main" tween is paused and a seperate loop tween is created.
+## It's passed to the callback, for any tweens to be added.
+## Once the loop tween has finished, the main tween will resume.
+func create_loop(tween:Tween, loops:int, callback:Callable):
+	tween.tween_callback(func():
+		tween.pause()
+		var loop_tween:Tween = get_tree().create_tween().set_loops(loops)
+		callback.call(loop_tween)
+		await loop_tween.finished
+		tween.play()
+	)
