@@ -35,7 +35,7 @@ func add_appear(tween:Tween, target, options:Dictionary = {}) -> Tween:
 	return tween
 	
 	
-## Creates an animation that creates a pulse like a heartbeat. Options:[br]
+## Creates an animation that pulses like a heartbeat. Options:[br]
 ## [code]amount: float = 1.3[/code][br]
 ## [code]duration: float = 0.4[/code][br]
 func add_pulse(tween:Tween, target, options:Dictionary = {}) -> Tween:
@@ -280,7 +280,7 @@ func add_shake(tween:Tween, target, options:Dictionary = {}) -> Tween:
 	
 	
 ## Creates an animated color flash over the target.
-## On the target a new shader material will be assigned and afterwards removed. Options:[br]
+## A new shader material will be assigned to the target, and removed afterwards. Options:[br]
 ## [code]flash_color: Color = Color.WHITE[/code][br]
 ## [code]amount: float = 0.8[/code][br]
 ## [code]fade_duration: float = 0.2[/code][br]

@@ -4,8 +4,6 @@ Tiny, reusable and chainable tweens for **Godot 4** to add *juice* to any `Contr
 
 The tweens are opinionated and preconfigured with sensible defaults. Great for game jams to slam some animations to UI and make it pop!
 
-[🎬 Watch the demo on youtube](https://www.youtube.com/watch?v=AZzs3Lm6kNE)
-
 
 ## Install
 
@@ -53,28 +51,167 @@ Use `create_loop` to repeat a subsection of the tween chain without looping the 
 
 ## 🔎 API cheatsheet
 
-- `add_appear(tween, target, options)`
-- `add_disappear(tween, target, options)`
-- `add_pulse(tween, target, options)`[^1]
-- `add_bob(tween, target, options)`[^1]  
-- `add_bounce(tween, target, options)`
-- `add_wobble(tween, target, options)`
-- `add_squeeze(tween, target, options)`
-- `add_spin(tween, target, options)`
-- `add_flip(tween, target, options)`
-- `add_shake(tween, target, options)`
-- `add_flash(tween, target, options)`
-- `create_loop(tween, loops, options)`
+### Appear
 
-[^1]: Suitable for looping.
+Creates an animation that scales the target from zero to its default scale.
+
+![Appear](./docs/gif/tween_appear.gif)
+
+`add_appear(tween, target, options)`
+
+Options:
+* `default_scale: Vector2 = Vector2.ONE`
+* `duration: float = 1.0`
+
+
+### Disappear
+
+Creates an animation that scales the target down to zero.
+
+![Disappear](./docs/gif/tween_disappear.gif)
+
+`add_appear(tween, target, options)`
+
+Options:
+* `duration: float = 0.4`
+
+
+### Pulse
+
+Creates an animation that pulses like a heartbeat. **Loopable!**
+
+![Pulse](./docs/gif/tween_pulse.gif)
+
+`add_pulse(tween, target, options)`
+
+Options:
+* `amount: float = 1.3`
+* `duration: float = 0.4`
+
+
+### Bob
+
+Creates an animation that bobs the target in a given direction. **Loopable!**
+
+![Bob](./docs/gif/tween_bob.gif)
+
+`add_bob(tween, target, options)`
+
+Options:
+* `distance: float = 20.0`
+* `duration: float = 0.4`
+* `direction: Vector2 = Vector2.UP`
+
+
+### Bounce
+
+Creates an animation that makes the target bounce in a given direction
+
+![Bounce](./docs/gif/tween_bounce.gif)
+
+`add_bounce(tween, target, options)`
+
+Options:
+* `distance: float = 20.0`
+* `duration: float = 0.8`
+* `direction: Vector2 = Vector2.UP`
+
+
+### Wobble
+
+Creates an animation that makes the target wobble from right to left.
+
+![Wobble](./docs/gif/tween_wobble.gif)
+
+`add_wobble(tween, target, options)`
+
+Options:
+* `angle_degrees: float = 30.0`
+* `duration: float = 1.0`
+* `snaps: int = 3`
+
+
+### Squeeze
+
+Creates an animation that squeezes the target like a squeeze ball.
+
+![Squeeze](./docs/gif/tween_squeeze.gif)
+
+`add_squeeze(tween, target, options)`
+
+Options:
+* `duration: float = 0.8`
+* `max_scale: float = 1.2`
+* `min_scale: floar = 0.2`
+
+
+### Spin
+
+Creates an animation that spins the target around.
+
+![Spin](./docs/gif/tween_spin.gif)
+
+`add_spin(tween, target, options)`
+
+Options:
+* `direction: int = 1`
+* `duration: float = 0.8`
+* `keep_base: bool = false`
+* `num_of_spins: int = 1`
+
+
+### Flip
+
+Creates an animation that flips the target like a card.
+
+Note that the flip animation has a `halfway_callback` option. Supply a `Callable` that changes the card between open and closed state, for a true card-flipping effect.
+
+![Flip](./docs/gif/tween_flip.gif)
+
+`add_flip(tween, target, options)`
+
+Options:
+* `axis: Vector2 = Vector2.UP`
+* `duration: float = 0.6`
+* `halfway_callback: Callable`
+
+
+### Shake
+
+Creates an animation that shakes the target around.
+
+![Shake](./docs/gif/tween_shake.gif)
+
+`add_shake(tween, target, options)`
+
+Options:
+* `range: float = 10.0`
+* `duration: float = 1.0`
+* `intval: float = 0.02`
+* `decay: float = 1.0`
+
+
+### Flash
+
+Creates an animated color flash over the target. A new shader material will be assigned to the target, and removed afterwards.
+
+The included shader tints any `CanvasItem` toward a color. It’s generic and reusable outside `Tweens2D`, and it respects existing `modulate/self_modulate`.
+
+![Flash](./docs/gif/tween_flash.gif)
+
+`add_flash(tween, target, options)`
+
+Options:
+* `flash_color: Color = Color.WHITE`
+* `amount: float = 0.8`
+* `fade_duration: float = 0.2`
+* `hold_duration: float = 0`
 
 
 ## Usage notes
 
 - **Pivot/center.** For `Control`, set `pivot_offset = size * 0.5` so scale/rotation effects are centered. For `Sprite2D`, ensure `centered` is enabled (or set a custom pivot if needed).
 - **Interactive nodes.** On widgets like `Button`, avoid tweening the button node itself; it can trigger an unexpected `mouse_exited`. Tween a visual child instead (e.g., a `TextureRect` or `Label`). If needed, set the child’s `mouse_filter = MOUSE_FILTER_IGNORE`.
-- **Card flip.** Note how the flip animation has a `halfway_callback` parameter. Supply a `Callable` that changes the card between open and closed state, for a true card-flipping effect.
-- **Color shader.** The included shader tints any `CanvasItem` toward a color (used by `add_flash`). It’s generic and reusable outside `Tweens2D`, and it respects existing `modulate/self_modulate`.
 
 
 ## 📄 License
